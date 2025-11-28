@@ -71,8 +71,9 @@ async function init() {
     flip.update(newSize.width, newSize.height);
   });
 
+
   // ----------------------------------------------------
-  // ③ PC: 右クリックは絶対ページめくり禁止
+  // ③ PC: 右クリック → 完全無効（ページめくりさせない）
   // ----------------------------------------------------
   flipBookElement.addEventListener("mousedown", (e) => {
     if (e.button === 2) {
@@ -94,7 +95,7 @@ async function init() {
 
 
   // ----------------------------------------------------
-  // ④ 拡大ビュー生成（全体表示）
+  // ④ 拡大ビュー（オーバーレイ）
   // ----------------------------------------------------
   if (!document.getElementById("zoom-overlay")) {
     const overlay = document.createElement("div");
@@ -144,33 +145,12 @@ async function init() {
 
 
   // ----------------------------------------------------
-  // ⑤ 拡大メニュー
+  // ⑤ 押した位置からページ判定
   // ----------------------------------------------------
-  const menu = document.createElement("div");
-  menu.id = "zoom-menu";
-  menu.style.cssText = `
-    position: fixed;
-    display: none;
-    background: rgba(30,30,30,0.96);
-    color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    z-index: 9999;
-    font-size: 16px;
-    cursor: pointer;
-  `;
-  menu.innerText = "🔍 拡大して見る";
-  document.body.appendChild(menu);
-
-
-  // ----------------------------------------------------
-  // ⑥ 押した位置からページ判定
-  // ----------------------------------------------------
-  let lastPressEvent = null;
-
   function getClickedPageIndex(event) {
     const rect = flipBookElement.getBoundingClientRect();
-    const clientX = (event.touches?.[0]?.clientX ?? event.clientX) - rect.left;
+    const clientX =
+      (event.touches?.[0]?.clientX ?? event.clientX) - rect.left;
 
     const mid = rect.width / 2;
     const left = flip.getCurrentPageIndex();
@@ -181,35 +161,7 @@ async function init() {
 
 
   // ----------------------------------------------------
-  // ⑦ 拡大処理（ズレ補正込み）
-  // ----------------------------------------------------
-  menu.onclick = () => {
-
-    let flipIndex = getClickedPageIndex(lastPressEvent);
-    let realIndex = flipIndex;
-
-    if (realIndex < 0) realIndex = -1;
-
-    document.getElementById("zoom-img").src = pages[realIndex];
-    document.getElementById("zoom-overlay").style.display = "flex";
-    menu.style.display = "none";
-  };
-
-
-  // ----------------------------------------------------
-  // ⑧ PC: 右クリックでメニュー表示
-  // ----------------------------------------------------
-  flipBookElement.addEventListener("contextmenu", (e) => {
-    e.preventDefault();
-    lastPressEvent = e;
-    menu.style.left = `${e.clientX}px`;
-    menu.style.top = `${e.clientY}px`;
-    menu.style.display = "block";
-  });
-
-
-  // ----------------------------------------------------
-  // ⑨ スマホ長押し判定（誤動作ゼロ）
+  // ⑥ 長押しで即拡大（ボタンなし）
   // ----------------------------------------------------
   let isLongPress = false;
   let pressTimer = null;
@@ -219,12 +171,13 @@ async function init() {
 
     pressTimer = setTimeout(() => {
       isLongPress = true;
-      lastPressEvent = e;
 
-      const t = e.touches[0];
-      menu.style.left = `${t.clientX}px`;
-      menu.style.top = `${t.clientY}px`;
-      menu.style.display = "block";
+      const flipIndex = getClickedPageIndex(e);
+      let realIndex = flipIndex;
+      if (realIndex < 0) realIndex = -1;
+
+      document.getElementById("zoom-img").src = pages[realIndex];
+      document.getElementById("zoom-overlay").style.display = "flex";
 
     }, 500);
   });
@@ -246,11 +199,4 @@ async function init() {
     }
   }, true);
 
-
-  // ----------------------------------------------------
-  // ⑩ メニュー外クリックで閉じる
-  // ----------------------------------------------------
-  document.addEventListener("click", (e) => {
-    if (e.target !== menu) menu.style.display = "none";
-  });
 }
