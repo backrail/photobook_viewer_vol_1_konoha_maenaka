@@ -120,3 +120,18 @@ html, body {
     object-position: center;
     display: block;
 }
+
+/* ▼ 見開き画像コンテナ（2枚横並び） */
+.page-spread {
+    width: 100%;
+    aspect-ratio: 2820 / 2250;  /* ← 比率を固定する核心 */
+    overflow: hidden;
+    position: relative;
+}
+
+/* ▼ 中の画像（左右ページ） */
+.page-spread img {
+    width: 50%;   /* 見開きなので半分 */
+    height: 100%;
+    object-fit: cover; /* 余白ゼロで比率維持 */
+}
